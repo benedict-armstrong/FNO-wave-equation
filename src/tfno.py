@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from layers import ResidualBlock, SpectralConv1d
+from src.layers import ResidualBlock, SpectralConv1d
 
 
 class FNO1d(nn.Module):

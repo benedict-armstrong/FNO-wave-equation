@@ -8,6 +8,8 @@ dependencies = [
     "ipykernel>=6.29.5",
     "matplotlib>=3.10.0",
     "numpy>=2.2.1",
+    "onnx>=1.17.0",
+    "onnxscript>=0.1.0.dev20250108",
     "torch>=2.5.1",
     "tqdm>=4.67.1",
 ]
