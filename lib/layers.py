@@ -3,12 +3,18 @@ import torch.nn as nn
 
 
 class FILM(torch.nn.Module):
-    def __init__(self, channels, use_bn=True):
+    def __init__(self, channels, lift_dim: int = 16, use_bn=True):
         super(FILM, self).__init__()
         self.channels = channels
 
-        self.inp2scale = nn.Linear(in_features=1, out_features=channels, bias=True)
-        self.inp2bias = nn.Linear(in_features=1, out_features=channels, bias=True)
+        self.linear = nn.Linear(in_features=1, out_features=lift_dim)
+
+        self.inp2scale = nn.Linear(
+            in_features=lift_dim, out_features=channels, bias=True
+        )
+        self.inp2bias = nn.Linear(
+            in_features=lift_dim, out_features=channels, bias=True
+        )
 
         self.inp2scale.weight.data.fill_(0)
         self.inp2scale.bias.data.fill_(1)
@@ -23,6 +29,7 @@ class FILM(torch.nn.Module):
     def forward(self, x: torch.Tensor, time: torch.Tensor):
         x = self.norm(x)
         time = time.reshape(-1, 1).type_as(x)
+        time = self.linear(time)
         scale = self.inp2scale(time)
         bias = self.inp2bias(time)
         scale = scale.unsqueeze(2).expand_as(x)
@@ -52,9 +59,9 @@ class ResidualBlock(nn.Module):
             padding_mode="circular",
         )
 
-        self.batch_norm1 = FILM(self.channels, use_bn)
-        self.batch_norm2 = FILM(self.channels, use_bn)
-        self.batch_norm3 = FILM(self.channels, use_bn)
+        self.batch_norm1 = FILM(self.channels, use_bn=use_bn)
+        self.batch_norm2 = FILM(self.channels, use_bn=use_bn)
+        self.batch_norm3 = FILM(self.channels, use_bn=use_bn)
 
         # self.dropout1 = nn.Dropout(0.1)
         # self.dropout2 = nn.Dropout(0.1)
@@ -91,7 +98,7 @@ class SpectralConv1d(nn.Module):
             * torch.rand(in_channels, out_channels, self.modes1, dtype=torch.cfloat)
         )
 
-        self.batch_norm1 = FILM(self.in_channels, use_bn)
+        self.batch_norm1 = FILM(self.in_channels, use_bn=use_bn)
 
     # Complex multiplication
     def compl_mul1d(self, input, weights):

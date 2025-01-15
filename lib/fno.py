@@ -52,7 +52,7 @@ class SpectralConv1d(nn.Module):
 
 
 class FNO1d(nn.Module):
-    def __init__(self, modes, width):
+    def __init__(self, modes, width, layers: int = 4):
         """
         The overall network. It contains 4 layers of the Fourier layer.
         1. Lift the input to the desire channel dimension by self.fc0 .
@@ -76,11 +76,11 @@ class FNO1d(nn.Module):
         )  # input channel is 2: (u0(x), x) --> GRID IS INCLUDED!
 
         self.spectral_layers = nn.ModuleList(
-            [SpectralConv1d(self.width, self.width, self.modes1) for _ in range(4)]
+            [SpectralConv1d(self.width, self.width, self.modes1) for _ in range(layers)]
         )
 
         self.linear_conv_layers = nn.ModuleList(
-            [nn.Conv1d(self.width, self.width, 1) for _ in range(4)]
+            [nn.Conv1d(self.width, self.width, 1) for _ in range(layers)]
         )
 
         self.linear_q = nn.Linear(self.width, 32)
