@@ -94,7 +94,6 @@ class PDEDatasetAll2All(Dataset):
         inputs = self.data[sample_idx, t_inp].reshape(1, self.spacial_res)
         target = self.data[sample_idx, t_out]
         if invert:
-            # inputs = inputs * -1
             inputs = torch.flip(inputs, [1]) * -1
             target = torch.flip(target, [0]) * -1
 

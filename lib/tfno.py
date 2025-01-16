@@ -5,7 +5,7 @@ from lib.layers import ResidualBlock, SpectralConv1d
 
 
 class FNO1d(nn.Module):
-    def __init__(self, modes, width):
+    def __init__(self, modes, width, layers: int = 4):
         """
         The overall network. It contains 4 layers of the Fourier layer.
         1. Lift the input to the desire channel dimension by self.fc0 .
@@ -28,11 +28,11 @@ class FNO1d(nn.Module):
         )  # input channel is 2: (u0(x), x, t) --> GRID IS INCLUDED!
 
         self.spectral_layers = nn.ModuleList(
-            [SpectralConv1d(self.width, self.width, self.modes) for _ in range(4)]
+            [SpectralConv1d(self.width, self.width, self.modes) for _ in range(layers)]
         )
 
         self.linear_conv_layers = nn.ModuleList(
-            [ResidualBlock(self.width) for _ in range(4)]
+            [ResidualBlock(self.width) for _ in range(layers)]
         )
 
         self.linear_q = nn.Linear(self.width, self.last_layer_width)
@@ -41,7 +41,7 @@ class FNO1d(nn.Module):
 
         self.activation = torch.nn.Tanh()
         self.last_activation = torch.nn.ReLU()
-        # self.dropout = nn.Dropout(0.2)
+        self.dropout = nn.Dropout(0.2)
 
     def fourier_layer(self, x, time_delta):
         ##########################################
@@ -50,7 +50,7 @@ class FNO1d(nn.Module):
         for f, c in zip(self.spectral_layers, self.linear_conv_layers):
             x = f(x, time_delta) + c(x, time_delta)
             x = self.activation(x)
-            # x = self.dropout(x)
+            x = self.dropout(x)
         return x
 
     def rescale(self, x: torch.Tensor):
@@ -63,19 +63,6 @@ class FNO1d(nn.Module):
 
     def unscale(self, x: torch.Tensor, scale: torch.Tensor):
         return x.squeeze(-1) * scale.unsqueeze(-1)
-
-    # def rescale(self, x: torch.Tensor):
-    #     x_v = x[..., 0]
-    #     min = torch.min(x_v, dim=1).values
-    #     max = torch.max(x_v, dim=1).values
-    #     x_rescaled = 2 * (x_v - min.unsqueeze(1)) / (max - min).unsqueeze(1) - 1
-    #     x[..., :1] = x_rescaled.unsqueeze(-1)
-    #     return x, min, max
-
-    # def unscale(self, x: torch.Tensor, max: torch.Tensor, min: torch.Tensor):
-    #     return (
-    #         (x + 1).squeeze(-1) * (max - min).unsqueeze(1) / 2 + min.unsqueeze(1)
-    #     ).unsqueeze(-1)
 
     def forward(self, x: torch.Tensor, time_delta: torch.Tensor):
         #################################################
