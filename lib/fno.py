@@ -15,7 +15,7 @@ class SpectralConv1d(nn.Module):
         self.modes = modes
 
         self.scale = 1 / (in_channels * out_channels)
-        self.weights1 = nn.Parameter(
+        self.weights = nn.Parameter(
             self.scale
             * torch.rand(in_channels, out_channels, self.modes, dtype=torch.cfloat)
         )
@@ -43,11 +43,11 @@ class SpectralConv1d(nn.Module):
             dtype=torch.cfloat,
         )
         out_ft[:, :, : self.modes] = self.compl_mul1d(
-            x_ft[:, :, : self.modes], self.weights1
+            x_ft[:, :, : self.modes], self.weights
         )
 
         # Return to physical space
-        x = torch.fft.irfft(out_ft, n=x.size(-1))
+        x = torch.fft.irfft(out_ft, n=x.shape[-1])
         return x
 
 
@@ -70,7 +70,7 @@ class FNO1d(nn.Module):
 
         self.modes = modes
         self.width = width
-        self.padding = 1  # pad the domain if input is non-periodic
+        self.padding = 0  # pad the domain if input is non-periodic
         self.linear_p = nn.Linear(
             2, self.width
         )  # input channel is 2: (u0(x), x) --> GRID IS INCLUDED!
@@ -80,7 +80,12 @@ class FNO1d(nn.Module):
         )
 
         self.linear_conv_layers = nn.ModuleList(
-            [nn.Conv1d(self.width, self.width, 1) for _ in range(layers)]
+            [
+                nn.Conv1d(
+                    self.width, self.width, 1 + 2 * self.padding, padding=self.padding
+                )
+                for _ in range(layers)
+            ]
         )
 
         self.linear_q = nn.Linear(self.width, 32)
@@ -93,7 +98,7 @@ class FNO1d(nn.Module):
         # TODO: Implement the Fourier layer:
         ##########################################
         for f, c in zip(self.spectral_layers, self.linear_conv_layers):
-            x = f(x) + c(x)
+            x = f(x) + c(x) + x
             x = self.activation(x)
 
         return x
