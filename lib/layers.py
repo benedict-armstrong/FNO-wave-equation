@@ -63,8 +63,8 @@ class ResidualBlock(nn.Module):
         self.batch_norm2 = FILM(self.channels, use_bn=use_bn)
         self.batch_norm3 = FILM(self.channels, use_bn=use_bn)
 
-        # self.dropout1 = nn.Dropout(0.1)
-        # self.dropout2 = nn.Dropout(0.1)
+        self.dropout1 = nn.Dropout(0.1)
+        self.dropout2 = nn.Dropout(0.1)
 
         self.act = torch.nn.ReLU()
 
@@ -72,15 +72,15 @@ class ResidualBlock(nn.Module):
         out = self.convolution1(x)
         out = self.batch_norm1(out, time)
         out = self.act(out)
-        # out = self.dropout1(out)
+        out = self.dropout1(out)
 
         out = self.convolution2(out)
         out = self.batch_norm2(out, time)
         out = self.act(out)
-        # out = self.dropout2(out)
+        out = self.dropout2(out)
 
-        # return self.batch_norm3(x, time) + out
-        return x + out
+        return self.batch_norm3(x, time) + out
+        # return x + out
 
 
 class SpectralConv1d(nn.Module):
