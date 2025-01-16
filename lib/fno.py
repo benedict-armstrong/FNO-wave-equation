@@ -3,7 +3,7 @@ import torch.nn as nn
 
 
 class SpectralConv1d(nn.Module):
-    def __init__(self, in_channels, out_channels, modes1):
+    def __init__(self, in_channels, out_channels, modes):
         super(SpectralConv1d, self).__init__()
 
         """
@@ -12,12 +12,12 @@ class SpectralConv1d(nn.Module):
 
         self.in_channels = in_channels
         self.out_channels = out_channels
-        self.modes1 = modes1
+        self.modes = modes
 
         self.scale = 1 / (in_channels * out_channels)
         self.weights1 = nn.Parameter(
             self.scale
-            * torch.rand(in_channels, out_channels, self.modes1, dtype=torch.cfloat)
+            * torch.rand(in_channels, out_channels, self.modes, dtype=torch.cfloat)
         )
 
     # Complex multiplication
@@ -42,8 +42,8 @@ class SpectralConv1d(nn.Module):
             device=x.device,
             dtype=torch.cfloat,
         )
-        out_ft[:, :, : self.modes1] = self.compl_mul1d(
-            x_ft[:, :, : self.modes1], self.weights1
+        out_ft[:, :, : self.modes] = self.compl_mul1d(
+            x_ft[:, :, : self.modes], self.weights1
         )
 
         # Return to physical space
@@ -68,7 +68,7 @@ class FNO1d(nn.Module):
 
         super(FNO1d, self).__init__()
 
-        self.modes1 = modes
+        self.modes = modes
         self.width = width
         self.padding = 1  # pad the domain if input is non-periodic
         self.linear_p = nn.Linear(
@@ -76,7 +76,7 @@ class FNO1d(nn.Module):
         )  # input channel is 2: (u0(x), x) --> GRID IS INCLUDED!
 
         self.spectral_layers = nn.ModuleList(
-            [SpectralConv1d(self.width, self.width, self.modes1) for _ in range(layers)]
+            [SpectralConv1d(self.width, self.width, self.modes) for _ in range(layers)]
         )
 
         self.linear_conv_layers = nn.ModuleList(
