@@ -26,28 +26,14 @@ class SpectralConv1d(nn.Module):
         return torch.einsum("bix,iox->box", input, weights)
 
     def forward(self, x):
-        batchsize = x.shape[0]
-        # x.shape == [batch_size, in_channels, number of grid points]
-        # hint: use torch.fft library torch.fft.rfft
-        # use DFT to approximate the fourier transform
-
         # Compute Fourier coefficients
-        x_ft = torch.fft.rfft(x)
+        x_ft = torch.fft.rfft(x, n=x.shape[-1], norm="forward")
 
         # Multiply relevant Fourier modes
-        out_ft = torch.zeros(
-            batchsize,
-            self.out_channels,
-            x.size(-1) // 2 + 1,
-            device=x.device,
-            dtype=torch.cfloat,
-        )
-        out_ft[:, :, : self.modes] = self.compl_mul1d(
-            x_ft[:, :, : self.modes], self.weights
-        )
+        out_ft = self.compl_mul1d(x_ft[:, :, : self.modes], self.weights)
 
         # Return to physical space
-        x = torch.fft.irfft(out_ft, n=x.shape[-1])
+        x = torch.fft.irfft(out_ft, n=x.shape[-1], norm="forward")
         return x
 
 
@@ -98,7 +84,7 @@ class FNO1d(nn.Module):
         # TODO: Implement the Fourier layer:
         ##########################################
         for f, c in zip(self.spectral_layers, self.linear_conv_layers):
-            x = f(x) + c(x) + x
+            x = f(x) + c(x)
             x = self.activation(x)
 
         return x
@@ -118,5 +104,6 @@ class FNO1d(nn.Module):
         x = x.permute(0, 2, 1)
 
         x = self.linear_q(x)
+        x = self.activation(x)
 
         return self.output_layer(x)

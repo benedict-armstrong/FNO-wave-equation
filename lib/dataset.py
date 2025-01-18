@@ -8,8 +8,11 @@ class PDEDataset(Dataset):
     def __init__(
         self,
         path: str,
+        device: str = "cpu",
     ):
-        self.original_data = torch.from_numpy(np.load(path)).type(torch.float32)
+        self.original_data = (
+            torch.from_numpy(np.load(path)).type(torch.float32).to(device)
+        )
         self.length = self.original_data.shape[0]
 
         self.sample_resolution = self.original_data.shape[-1]
@@ -17,7 +20,7 @@ class PDEDataset(Dataset):
 
         self.x_values = torch.tensor(
             np.linspace(0, 1, self.sample_resolution), dtype=torch.float32
-        )
+        ).to(device)
 
         # for each sample add the x and t values
         self.data = self.original_data.unsqueeze(-1)
