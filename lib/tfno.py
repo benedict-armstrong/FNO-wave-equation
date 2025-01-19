@@ -40,7 +40,7 @@ class FNO1d(nn.Module):
         self.output_layer = nn.Linear(self.last_layer_width, 1)
 
         self.activation = torch.nn.Tanh()
-        self.last_activation = torch.nn.ReLU()
+        self.last_activation = torch.nn.Tanh()
         self.dropout = nn.Dropout(0.2)
 
     def fourier_layer(self, x, time_delta):

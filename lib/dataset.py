@@ -83,16 +83,20 @@ class PDEDatasetAll2All(Dataset):
 
     def __getitem__(self, index):
         invert = False
+
         if self.augment_data and index >= self.total_samples:
             invert = True
             index -= self.total_samples
+
         sample_idx = index // self.len_times
         time_pair_idx = index % self.len_times
         t_inp, t_out = self.time_pairs[time_pair_idx]
         time_delta = (t_out - t_inp) * 1.0 / (1 - self.time_steps)
 
         inputs = self.data[sample_idx, t_inp].reshape(1, self.spacial_res)
+
         target = self.data[sample_idx, t_out]
+
         if invert:
             inputs = torch.flip(inputs, [1]) * -1
             target = torch.flip(target, [0]) * -1
@@ -107,3 +111,9 @@ class PDEDatasetAll2All(Dataset):
         #     return -1 * abs(float(time_delta)), inputs.T, target
 
         return abs(float(time_delta)), inputs.T, target
+
+
+if __name__ == "__main__":
+    test = PDEDatasetAll2All("FNO-wave-equation/data/train_sol.npy", augment_data=True)
+
+    print(test[1])
