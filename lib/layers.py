@@ -66,6 +66,7 @@ class ResidualBlock(nn.Module):
         self.dropout1 = nn.Dropout(0.1)
         self.dropout2 = nn.Dropout(0.1)
 
+        # self.linear = nn.Linear(in_features=1, out_features=self.channels)
         self.act = torch.nn.ReLU()
 
     def forward(self, x: torch.Tensor, time: torch.Tensor):
@@ -99,6 +100,7 @@ class SpectralConv1d(nn.Module):
         )
 
         self.batch_norm1 = FILM(self.in_channels, use_bn=use_bn)
+        # self.linear = nn.Linear(in_features=1, out_features=self.in_channels)
 
     # Complex multiplication
     def compl_mul1d(self, input, weights):

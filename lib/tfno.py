@@ -73,7 +73,8 @@ class FNO1d(nn.Module):
         # x, scale = self.rescale(x)
         x = self.linear_p(x)
         x = x.permute(0, 2, 1)
-        x = self.fourier_layer(x, time_delta)
+        x_o = self.fourier_layer(x, time_delta)
+        x = self.fourier_layer(x + x_o, time_delta) + x + x_o
         x = x.permute(0, 2, 1)
         x = self.linear_q(x)
         x = self.last_activation(x)
